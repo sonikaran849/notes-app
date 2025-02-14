@@ -20,26 +20,31 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl mb-4">Login</h1>
-      {error && <p className="text-red-500">{error}</p>}
-      <input
-        type="email"
-        className="border p-2 mb-2"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        className="border p-2 mb-2"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button className="bg-blue-500 text-white px-4 py-2" onClick={handleLogin}>
-        Login
-      </button>
+    <div className="flex justify-center items-center h-screen">
+      <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h1 className="text-2xl text-center mb-6">Login</h1>
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        <input
+          type="email"
+          className="border p-2 mb-4 w-full rounded-md"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          className="border p-2 mb-4 w-full rounded-md"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white px-4 py-2 w-full rounded-md"
+          onClick={handleLogin}
+        >
+          Login
+        </button>
+      </div>
     </div>
   );
 }
