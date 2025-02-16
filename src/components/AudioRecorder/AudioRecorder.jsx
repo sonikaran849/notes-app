@@ -1,64 +1,95 @@
 import { useState, useRef } from "react";
 
 export default function AudioRecorder({ onSave }) {
-  const [recording, setRecording] = useState(false);
-  const [transcript, setTranscript] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const recognitionRef = useRef(null);
+  const transcriptRef = useRef(""); // ✅ Stores full transcript
+  const [audioBlob, setAudioBlob] = useState(null);
 
   const startRecording = () => {
-    if (!("webkitSpeechRecognition" in window)) {
-      alert("Your browser does not support speech recognition.");
-      return;
-    }
+    setIsRecording(true);
+    audioChunksRef.current = [];
+    transcriptRef.current = ""; // ✅ Reset transcript on new recording
+    setAudioBlob(null);
 
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    // 🎙 Start Speech Recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "en-US";
+    recognition.continuous = true; // ✅ Ensures continuous speech recognition
+    recognition.interimResults = true; // ✅ Shows live transcription updates
 
-    recognition.onstart = () => setRecording(true);
     recognition.onresult = (event) => {
-      const speechText = event.results[0][0].transcript;
-      setTranscript(speechText);
-    };
-    recognition.onerror = (event) => console.error("Speech Recognition Error:", event.error);
-    recognition.onend = () => setRecording(false);
+      let finalTranscript = transcriptRef.current;
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += " " + event.results[i][0].transcript; // ✅ Append full sentence
+        }
+      }
 
-    recognitionRef.current = recognition;
+      transcriptRef.current = finalTranscript.trim(); // ✅ Save final transcript properly
+      console.log("🎤 Updated Transcript:", transcriptRef.current);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("❌ Speech Recognition Error:", event.error);
+    };
+
+    recognition.onend = () => {
+      console.log("🔄 Speech recognition stopped.");
+    };
+
     recognition.start();
+    recognitionRef.current = recognition;
+
+    // 🎤 Start Audio Recording
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start();
+    });
   };
 
   const stopRecording = () => {
+    setIsRecording(false);
+
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
     if (recognitionRef.current) {
       recognitionRef.current.stop();
-      setRecording(false);
     }
-  };
 
-  const saveNote = () => {
-    if (transcript.trim()) {
-      onSave(transcript);
-      setTranscript("");
-    }
+    // ✅ Save transcript & audio after stopping
+    setTimeout(() => {
+      if (audioChunksRef.current.length > 0) {
+        const finalAudioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        console.log("📥 Final Audio Blob:", finalAudioBlob, "Size:", finalAudioBlob.size);
+        setAudioBlob(finalAudioBlob);
+
+        console.log("📜 Final Transcript Sent to Parent:", transcriptRef.current);
+        onSave(transcriptRef.current.trim(), finalAudioBlob); // ✅ Pass latest transcript
+      }
+    }, 500);
   };
 
   return (
-    <div className="mb-6">
-      <h3 className="text-lg font-bold mb-2">Record Audio Note</h3>
+    <div>
       <button
-        className={`px-4 py-2 ${recording ? "bg-red-500" : "bg-green-500"} text-white rounded`}
-        onClick={recording ? stopRecording : startRecording}
+        onClick={isRecording ? stopRecording : startRecording}
+        className="bg-purple-600 text-white p-2 rounded-lg inline-flex shrink-0 justify-center items-center cursor-pointer float-right w-40 text-center whitespace-nowrap"
       >
-        {recording ? "Stop Recording" : "Start Recording"}
+        {isRecording ? "Stop Recording" : "Start Recording"}
       </button>
-      {transcript && (
-        <div className="mt-4 p-2 bg-gray-100 rounded">
-          <p className="text-gray-700">{transcript}</p>
-          <button onClick={saveNote} className="mt-2 bg-blue-500 text-white px-3 py-1 rounded">
-            Save Note
-          </button>
-        </div>
-      )}
     </div>
   );
 }

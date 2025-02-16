@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { api, API_BASE_URL } from "../../config/apiconfig";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -10,7 +11,7 @@ export default function Signup() {
 
   const handleSignup = async () => {
     try {
-      await axios.post("/api/auth/signup", { name, email, password });
+      await api.post(`${API_BASE_URL}/api/auth/signup`, { name, email, password });
       window.location.href = "/login";
     } catch (err) {
       setError("Signup failed. Please try again.");
