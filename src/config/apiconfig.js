@@ -1,7 +1,7 @@
 
 import axios from "axios";
 
-export const API_BASE_URL = "http://localhost:7777";
+export const API_BASE_URL = "https://notes-app-backend-87bh.onrender.com";
 
 const jwt = localStorage.getItem("jwt");
 
