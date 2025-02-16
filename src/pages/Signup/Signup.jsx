@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, API_BASE_URL } from "../../config/apiconfig";
 
 export default function Signup() {
@@ -8,11 +8,12 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSignup = async () => {
     try {
       await api.post(`${API_BASE_URL}/api/auth/signup`, { name, email, password });
-      window.location.href = "/login";
+      navigate("/login");
     } catch (err) {
       setError("Signup failed. Please try again.");
       console.error(err);
